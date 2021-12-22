@@ -258,7 +258,6 @@ public class ScreenshotController {
     private final WindowManager.LayoutParams mWindowLayoutParams;
     private final AccessibilityManager mAccessibilityManager;
     private final AudioManager mAudioManager;
-    private final MediaActionSound mCameraSound;
     private final ScrollCaptureClient mScrollCaptureClient;
     private final PhoneWindow mWindow;
     private final DisplayManager mDisplayManager;
@@ -388,10 +387,6 @@ public class ScreenshotController {
         mConfigChanges.applyNewConfig(context.getResources());
         reloadAssets();
 
-        // Setup the Camera shutter sound
-        mCameraSound = new MediaActionSound();
-        mCameraSound.load(MediaActionSound.SHUTTER_CLICK);
-
         // Grab system services needed for screenshot sound
         mAudioManager = (AudioManager) mContext.getSystemService(Context.AUDIO_SERVICE);
         mVibrator = (Vibrator) mContext.getSystemService(Context.VIBRATOR_SERVICE);
@@ -493,7 +488,6 @@ public class ScreenshotController {
      */
     void releaseContext() {
         mContext.release();
-        mCameraSound.release();
         mBgExecutor.shutdownNow();
     }
 
@@ -860,8 +854,6 @@ public class ScreenshotController {
      * failure).
      */
     private void saveScreenshotAndToast(Consumer<Uri> finisher) {
-        playShutterSoundIf();
-
         saveScreenshotInWorkerThread(
                 /* onComplete */ finisher,
                 /* actionsReadyListener */ imageData -> {
@@ -892,8 +884,6 @@ public class ScreenshotController {
 
         mScreenshotAnimation =
                 mScreenshotView.createScreenshotDropInAnimation(screenRect, showFlash);
-
-        playShutterSoundIf();
 
         if (DEBUG_ANIM) {
             Log.d(TAG, "starting post-screenshot animation");
